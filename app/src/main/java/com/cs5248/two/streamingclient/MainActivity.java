@@ -7,10 +7,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -20,8 +22,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -65,10 +69,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                Intent settingsIntent = new Intent(this, SettingsActivity.class);
+                startActivity(settingsIntent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         ListAllVideos();
     }
+
+
 
     public void ListAllVideos() {
         mainTitleText = findViewById(R.id.title_txt_view);
@@ -225,7 +250,9 @@ public class MainActivity extends AppCompatActivity {
         uploadVideoProgressText = customView.findViewById(R.id.uploadTextView);
         UploadFile uploadObj = new UploadFile(uploadVideoProgressBar, uploadVideoProgressText, segmentsPath, f.getName(), "Samsung Galaxy Tab", uploadVideoPopupWindow);
         try {
-            uploadObj.execute();
+            String uploadUrl = PreferenceManager.getDefaultSharedPreferences(this)
+                    .getString("upload_url", "http://server.com/upload.php");
+            uploadObj.execute(uploadUrl);
         } catch (Exception e) {
             e.printStackTrace();
         }

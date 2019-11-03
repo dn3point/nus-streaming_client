@@ -7,6 +7,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.preference.PreferenceManager;
+
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,7 +18,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 
-public class UploadFile extends AsyncTask<Void, Integer, Void> {
+public class UploadFile extends AsyncTask<String, Integer, Void> {
+    private static final String LOG_TAG = UploadFile.class.getSimpleName();
 
     private ProgressBar uploadProgress;
     private TextView textView;
@@ -66,17 +69,14 @@ public class UploadFile extends AsyncTask<Void, Integer, Void> {
     }
 
     @Override
-    protected void onProgressUpdate(Integer... values)
-    {
-        if (values[0] == -1)
-        {
+    protected void onProgressUpdate(Integer... values) {
+        if (values[0] == -1) {
             textView.setText(segmentsUploaded  + " segments uploaded but failed to load the next segment, trying again, Upload Attempt is "+uploadAttempt);
         }
-        else if(values[0] == -2){
+        else if(values[0] == -2) {
             textView.setText(segmentsUploaded  + " segments uploaded, rest failed due to network issues");
         }
-        else
-        {
+        else {
             uploadProgress.setProgress(values[0]);
             textView.setText(segmentsUploaded+1  + " segments uploaded");
         }
@@ -84,17 +84,17 @@ public class UploadFile extends AsyncTask<Void, Integer, Void> {
     }
 
     @Override
-    protected Void doInBackground(Void... params) {
-
+    protected Void doInBackground(String... params) {
+        String upLoadServerUri = params[0];
+        Log.d(LOG_TAG, "Upload URL: " + upLoadServerUri);
         ArrayList<String> segmentList = GetFiles(directory);
-        Iterator iter = segmentList.iterator();
         String totalStreamlets = Integer.toString(segmentList.size());
         totalSegments = segmentList.size();
         for (int i = segmentsUploaded; i < segmentList.size(); i++) {
 
             try {
-                String sourceFileUri = segmentList.get(i).toString();
-                System.out.println("Trying to upload the file " + sourceFileUri);
+                String sourceFileUri = segmentList.get(i);
+                Log.d(LOG_TAG, "Trying to upload the file " + sourceFileUri);
                 HttpURLConnection conn = null;
                 DataOutputStream dos = null;
                 String lineEnd = "\r\n";
@@ -104,15 +104,12 @@ public class UploadFile extends AsyncTask<Void, Integer, Void> {
                 byte[] buffer;
                 int maxBufferSize = 1 * 1024 * 1024;
                 File sourceFile = new File(sourceFileUri);
-                System.out.println("Device id is " + deviceId);
+                Log.d(LOG_TAG, "Device id is " + deviceId);
                 String streamletNo = Integer.toString(i);
 
                 if (sourceFile.isFile()) {
 
                     try {
-                        String upLoadServerUri = "http://monterosa.d2.comp.nus.edu.sg/~team07/upload.php";
-
-
                         // open a URL connection to the Servlet
                         FileInputStream fileInputStream = new FileInputStream(
                                 sourceFile);
@@ -211,7 +208,7 @@ public class UploadFile extends AsyncTask<Void, Integer, Void> {
                         Thread.sleep(5000);
                         uploadAttempt++;
                         System.out.println("Upload attempt is " + uploadAttempt);
-                        if(uploadAttempt == 6){
+                        if (uploadAttempt == 3) {
                             publishProgress(-2);
                             System.out.println("Max upload attempts reached");
                             break;
