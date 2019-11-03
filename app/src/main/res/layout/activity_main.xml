@@ -8,35 +8,35 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/title_txt_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/list_view_margin"
+            android:layout_marginTop="@dimen/list_view_margin"
+            android:fontFamily="sans-serif"
+            android:text="@string/title_video_list"
+            android:textAlignment="center"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="@dimen/list_title"
+            android:textStyle="bold"
+            android:typeface="sans" />
+
+        <ListView
+            android:id="@+id/video_list_view"
+            style="@style/Widget.AppCompat.ListView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:clickable="false">
+        </ListView>
 
-            <TextView
-                android:id="@+id/mainTitleText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:layout_marginTop="10dp"
-                android:fontFamily="sans-serif"
-                android:text="@string/video_list_title"
-                android:textAlignment="center"
-                android:textColor="@color/colorPrimaryDark"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:typeface="sans" />
-
-            <ListView
-                android:id="@+id/fileListView"
-                style="@style/Widget.AppCompat.ListView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clickable="false">
-            </ListView>
-
-        </LinearLayout>
+    </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btn_capture"

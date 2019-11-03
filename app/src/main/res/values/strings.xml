@@ -1,11 +1,25 @@
 <resources>
     <string name="app_name">StreamingClient</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="video_list_title">Captured Videos</string>
+    <string name="title_home">Home</string>
+    <string name="title_camera">Camera</string>
     <string name="btn_camera">Camera</string>
-    <string name="btn_record">Record</string>
-    <string name="btn_stop">Stop</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="record">Record</string>
+    <string name="stop">Stop</string>
+    <string name="description_info">Info</string>
     <string name="permission_request">This app needs permission for camera and audio recording.</string>
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
+    <string name="intro_message">
+        <![CDATA[
+            This app demonstrates how to record video using Camera2 API.
+        ]]>
+    </string>
+    <string name="segment_progress"></string>
+    <string name="upload_progress"></string>
+    <string name="video_upload">Upload Video</string>
+    <string name="video_play">Play Video</string>
+    <string name="video_delete">Delete Video</string>
+    <string name="title_video_list">Video List</string>
+    <string name="title_settings">Settings</string>
 </resources>
