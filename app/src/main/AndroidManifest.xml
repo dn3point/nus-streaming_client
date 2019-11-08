@@ -36,7 +36,7 @@
         </provider>
 
         <activity
-            android:name=".CameraActivity"
+            android:name=".VideoActivity"
             android:parentActivityName=".MainActivity"></activity>
         <activity android:name=".MainActivity">
             <intent-filter>

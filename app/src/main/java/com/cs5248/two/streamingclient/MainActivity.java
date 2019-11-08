@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void openCamera() {
-        Intent intent = new Intent(this, CameraActivity.class);
+        Intent intent = new Intent(this, VideoActivity.class);
         startActivity(intent);
     }
 

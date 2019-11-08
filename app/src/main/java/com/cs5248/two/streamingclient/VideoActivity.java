@@ -4,9 +4,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 
-import static android.content.ContentValues.TAG;
-
-public class CameraActivity extends Activity {
+public class VideoActivity extends Activity {
+    private static final String LOG_TAG = VideoActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,7 +20,7 @@ public class CameraActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        Log.d(TAG, "Back button pressed. Stopping recording and existing!!");
+        Log.d(LOG_TAG, "Back button is pressed");
         finish();
     }
 
