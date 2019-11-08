@@ -27,6 +27,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 import androidx.preference.PreferenceManager;
 
+import com.cs5248.two.streamingclient.util.FileUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
@@ -98,10 +99,11 @@ public class MainActivity extends AppCompatActivity {
     public void ListAllVideos() {
         mainTitleText = findViewById(R.id.title_txt_view);
         fileList = findViewById(R.id.video_list_view);
-        ArrayList<String> filesinfolder = GetFiles(getAppStoragePath(MainActivity.this));
+        ArrayList<String> filesinfolder = GetFiles(FileUtils.getStoragePath(MainActivity.this));
         if (filesinfolder.size() > 0) {
 
-            fileList.setAdapter(new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, filesinfolder));
+            fileList.setAdapter(new ArrayAdapter<>(
+                    MainActivity.this, android.R.layout.simple_list_item_1, filesinfolder));
             mainTitleText.setText("List of Videos");
             fileList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
@@ -162,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
                 String videoTitle = videoPopUpTitle.getText().toString();
                 Toast.makeText(MainActivity.this, "Splitting and uploading the video : " + videoTitle, Toast.LENGTH_LONG).show();
                 //Call the function that splits into segments and uploads
-                String dir = getAppStoragePath(MainActivity.this);
+                String dir = FileUtils.getStoragePath(MainActivity.this);
                 segmentVideo(dir, videoTitle);
                 uploadSingleVideo(dir, videoTitle);
 
@@ -177,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
                 String videoTitle = videoPopUpTitle.getText().toString();
                 Toast.makeText(MainActivity.this, "Deleting the video : " + videoTitle, Toast.LENGTH_LONG).show();
                 //Call the function that splits into segments and uploads
-                String dir = getAppStoragePath(MainActivity.this);
+                String dir = FileUtils.getStoragePath(MainActivity.this);
                 deleteVideo(dir, videoTitle);
             }
         });
@@ -190,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
                 String videoTitle = videoPopUpTitle.getText().toString();
                 Toast.makeText(MainActivity.this, "Playing the video : " + videoTitle, Toast.LENGTH_LONG).show();
                 //Call the function that splits into segments and uploads
-                String dir = getAppStoragePath(MainActivity.this);
+                String dir = FileUtils.getStoragePath(MainActivity.this);
                 playVideo(dir, videoTitle);
             }
         });
@@ -216,21 +218,9 @@ public class MainActivity extends AppCompatActivity {
         return Myfiles;
     }
 
-    private String getAppStoragePath(Context context) {
-        final File dir = context.getExternalFilesDir(null);
-        return dir.getAbsolutePath();
-    }
-
-    private String getStreamletStoragePath(Context context) {
-        final File dir = context.getExternalFilesDir(null);
-        return dir.getAbsolutePath() + "/streamlets";
-    }
-
-
-    private void uploadSingleVideo(String directorypath, String fileName) {
-        //ArrayList<String> filesinfolder = GetFiles(directorypath);
-        String mainFile = directorypath + "/" + fileName;
-        String segmentsPath = directorypath + "/streamlets/" + fileName + "/";
+    private void uploadSingleVideo(String directory, String fileName) {
+        String mainFile = directory + "/" + fileName;
+        String segmentsPath = directory + "/streamlets/" + fileName + "/";
         File f = new File(mainFile);
         mContext = getApplicationContext();
         mainLayout = findViewById(R.id.content);
@@ -293,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
     private void segmentVideo(String directorypath, String fileName) {
         //Segment the video in splits of 3 seconds
         Log.i("DASH", "Inside segmentVideo()");
-        //ArrayList<String> filesinfolder = GetFiles(directorypath);
+        //ArrayList<String> filesinfolder = getFiles(directorypath);
         String filepath = directorypath + "/" + fileName;
         File f = new File(filepath);
         outputPath = getSegmentFolder(f.getName());
@@ -327,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String getSegmentFolder(String innerFolderName) {
         String folderName = "streamlets/" + innerFolderName;
-        File segmentFolder = new File(getAppStoragePath(MainActivity.this), folderName);
+        File segmentFolder = new File(FileUtils.getStoragePath(MainActivity.this), folderName);
         segmentFolder.mkdirs();
 
         return segmentFolder.getPath() + "/";

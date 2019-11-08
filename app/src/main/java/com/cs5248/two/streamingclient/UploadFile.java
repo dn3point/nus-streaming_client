@@ -5,9 +5,8 @@ import android.util.Log;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.preference.PreferenceManager;
+import com.cs5248.two.streamingclient.util.CollectionUtils;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -16,33 +15,34 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 
 public class UploadFile extends AsyncTask<String, Integer, Void> {
     private static final String LOG_TAG = UploadFile.class.getSimpleName();
 
-    private ProgressBar uploadProgress;
-    private TextView textView;
-    private int segmentsUploaded = 0;
-    private int totalSegments = 0;
-    private String videoTitle;
-    private String deviceId;
-    private String directory;
-    private PopupWindow popUp;
-    private int uploadAttempt = 0;
+    private ProgressBar mUploadProgress;
+    private TextView mTextView;
+    private int mSegmentsUploaded = 0;
+    private int mTotalSegments = 0;
+    private String mVideoTitle;
+    private String mDeviceId;
+    private String mDirectory;
+    private PopupWindow mPopUp;
+    private int mUploadAttempt = 0;
 
-    public UploadFile(ProgressBar uploadProgress, TextView textView,String directory,String videoTitle,String deviceId, PopupWindow popUp){
-        this.uploadProgress = uploadProgress;
-        this.textView = textView;
-        this.videoTitle = videoTitle;
-        this.deviceId = deviceId;
-        this.directory = directory;
-        this.popUp = popUp;
+    public UploadFile(ProgressBar uploadProgress, TextView textView, String directory,
+                      String videoTitle, String deviceId, PopupWindow popUp){
+        this.mUploadProgress = uploadProgress;
+        this.mTextView = textView;
+        this.mVideoTitle = videoTitle;
+        this.mDeviceId = deviceId;
+        this.mDirectory = directory;
+        this.mPopUp = popUp;
     }
-    public ArrayList<String> GetFiles(String directorypath){
-        System.out.println("The segment path is "+ directorypath);
+
+    public ArrayList<String> getFiles(String directory){
+        Log.d(LOG_TAG, "The segment path is " + directory);
         ArrayList<String> Myfiles = new ArrayList<>();
-        File f = new File(directorypath);
+        File f = new File(directory);
         File[] files = f.listFiles();
         if(files.length==0){
             return Myfiles;
@@ -59,38 +59,42 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
 
     @Override
     protected void onPreExecute() {
-        uploadProgress.setMax(100);
-        textView.setText("Started to upload segments ...");
+        mUploadProgress.setMax(100);
+        mTextView.setText("Started to upload segments ...");
     }
 
     @Override
     protected void onPostExecute(Void result){
-        popUp.dismiss();
+        mPopUp.dismiss();
     }
 
     @Override
     protected void onProgressUpdate(Integer... values) {
         if (values[0] == -1) {
-            textView.setText(segmentsUploaded  + " segments uploaded but failed to load the next segment, trying again, Upload Attempt is "+uploadAttempt);
+            mTextView.setText(mSegmentsUploaded + " segments uploaded but failed to load the next segment, trying again, Upload Attempt is "+ mUploadAttempt);
         }
         else if(values[0] == -2) {
-            textView.setText(segmentsUploaded  + " segments uploaded, rest failed due to network issues");
+            mTextView.setText(mSegmentsUploaded + " segments uploaded, rest failed due to network issues");
         }
         else {
-            uploadProgress.setProgress(values[0]);
-            textView.setText(segmentsUploaded+1  + " segments uploaded");
+            mUploadProgress.setProgress(values[0]);
+            mTextView.setText(mSegmentsUploaded +1  + " segments uploaded");
         }
 
     }
 
     @Override
     protected Void doInBackground(String... params) {
+        if (CollectionUtils.isEmpty(params)) {
+            Log.e(LOG_TAG, "Invalid input parameter");
+            return null;
+        }
         String upLoadServerUri = params[0];
         Log.d(LOG_TAG, "Upload URL: " + upLoadServerUri);
-        ArrayList<String> segmentList = GetFiles(directory);
+        ArrayList<String> segmentList = getFiles(mDirectory);
         String totalStreamlets = Integer.toString(segmentList.size());
-        totalSegments = segmentList.size();
-        for (int i = segmentsUploaded; i < segmentList.size(); i++) {
+        mTotalSegments = segmentList.size();
+        for (int i = mSegmentsUploaded; i < segmentList.size(); i++) {
 
             try {
                 String sourceFileUri = segmentList.get(i);
@@ -104,7 +108,7 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
                 byte[] buffer;
                 int maxBufferSize = 1 * 1024 * 1024;
                 File sourceFile = new File(sourceFileUri);
-                Log.d(LOG_TAG, "Device id is " + deviceId);
+                Log.d(LOG_TAG, "Device id is " + mDeviceId);
                 String streamletNo = Integer.toString(i);
 
                 if (sourceFile.isFile()) {
@@ -157,21 +161,21 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
 
                         //send other params
                         dos.writeBytes(twoHyphens + boundary + lineEnd);
-                        dos.writeBytes("Content-Disposition: form-data; name=\"videoTitle\"" + lineEnd);
+                        dos.writeBytes("Content-Disposition: form-data; name=\"videoID\"" + lineEnd);
                         dos.writeBytes(lineEnd);
-                        dos.writeBytes(videoTitle);
-                        dos.writeBytes(lineEnd);
-                        dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
-
-                        dos.writeBytes(twoHyphens + boundary + lineEnd);
-                        dos.writeBytes("Content-Disposition: form-data; name=\"deviceId\"" + lineEnd);
-                        dos.writeBytes(lineEnd);
-                        dos.writeBytes(deviceId);
+                        dos.writeBytes(mVideoTitle);
                         dos.writeBytes(lineEnd);
                         dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
 
                         dos.writeBytes(twoHyphens + boundary + lineEnd);
-                        dos.writeBytes("Content-Disposition: form-data; name=\"streamletNo\"" + lineEnd);
+                        dos.writeBytes("Content-Disposition: form-data; name=\"mDeviceId\"" + lineEnd);
+                        dos.writeBytes(lineEnd);
+                        dos.writeBytes(mDeviceId);
+                        dos.writeBytes(lineEnd);
+                        dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+
+                        dos.writeBytes(twoHyphens + boundary + lineEnd);
+                        dos.writeBytes("Content-Disposition: form-data; name=\"seqNUM\"" + lineEnd);
                         dos.writeBytes(lineEnd);
                         dos.writeBytes(streamletNo);
                         dos.writeBytes(lineEnd); //to add multiple parameters write Content-Disposition: form-data; name=\"your parameter name\"" + crlf again and keep repeating till here :)
@@ -198,17 +202,17 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
                         fileInputStream.close();
                         dos.flush();
                         dos.close();
-                        uploadAttempt = 0;
-                        segmentsUploaded++;
+                        mUploadAttempt = 0;
+                        mSegmentsUploaded++;
 
                     } catch (Exception e) {
                         Log.i("DASH","Could not upload file " + sourceFile.getName() );
                         i--;
                         publishProgress(-1);
                         Thread.sleep(5000);
-                        uploadAttempt++;
-                        System.out.println("Upload attempt is " + uploadAttempt);
-                        if (uploadAttempt == 3) {
+                        mUploadAttempt++;
+                        System.out.println("Upload attempt is " + mUploadAttempt);
+                        if (mUploadAttempt == 3) {
                             publishProgress(-2);
                             System.out.println("Max upload attempts reached");
                             break;
@@ -219,8 +223,8 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
                     }
                 }
 
-                if ( segmentsUploaded<=totalSegments){
-                    publishProgress((segmentsUploaded * 100) / (totalSegments-1));
+                if ( mSegmentsUploaded <= mTotalSegments){
+                    publishProgress((mSegmentsUploaded * 100) / (mTotalSegments -1));
                 }
             } catch (Exception ex) {
                 // dialog.dismiss();

@@ -22,6 +22,8 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.CamcorderProfile;
+import android.media.CameraProfile;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,14 +52,14 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-public class CameraRecordActivity extends Fragment
+public class VideoFragment extends Fragment
         implements View.OnClickListener, FragmentCompat.OnRequestPermissionsResultCallback {
+    private static final String LOG_TAG = VideoFragment.class.getSimpleName();
 
     private static final int SENSOR_ORIENTATION_DEFAULT_DEGREES = 90;
     private static final int SENSOR_ORIENTATION_INVERSE_DEGREES = 270;
     private static final SparseIntArray DEFAULT_ORIENTATIONS = new SparseIntArray();
     private static final SparseIntArray INVERSE_ORIENTATIONS = new SparseIntArray();
-    private static final String TAG = "CameraRecordActivity";
     private static final int REQUEST_VIDEO_PERMISSIONS = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
     private static final String[] VIDEO_PERMISSIONS = {
@@ -82,7 +84,7 @@ public class CameraRecordActivity extends Fragment
     private Size mPreviewSize;
     private Size mVideoSize;
     private MediaRecorder mMediaRecorder;
-    private boolean mIsRecordingVideo;
+    private boolean mIsRecording;
     private HandlerThread mBackgroundThread;
     private Handler mBackgroundHandler;
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
@@ -150,18 +152,25 @@ public class CameraRecordActivity extends Fragment
 
     };
 
-    public static CameraRecordActivity newInstance() {
-        return new CameraRecordActivity();
+    public static VideoFragment newInstance() {
+        return new VideoFragment();
     }
 
-    private static Size chooseVideoSize(Size[] choices) {
+    /**
+     * Choose video size
+     * @param choices available size array
+     * @return Suitable video size
+     */
+    private Size chooseVideoSize(Size[] choices) {
 
         for (Size size : choices) {
             if (size.getWidth() == size.getHeight() * 4 / 3 && size.getWidth() <= 720) {
+                Log.d(LOG_TAG, size.toString());
                 return size;
             }
         }
-        Log.e(TAG, "Couldn't find any suitable video size");
+        Log.d(LOG_TAG, "No suitable video size, select: "
+                + choices[choices.length - 1].toString());
         return choices[choices.length - 1];
     }
 
@@ -181,7 +190,7 @@ public class CameraRecordActivity extends Fragment
         if (bigEnough.size() > 0) {
             return Collections.min(bigEnough, new CompareSizesByArea());
         } else {
-            Log.e(TAG, "Couldn't find any suitable preview size");
+            Log.e(LOG_TAG, "Couldn't find any suitable preview size");
             return choices[0];
         }
     }
@@ -221,7 +230,7 @@ public class CameraRecordActivity extends Fragment
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.video: {
-                if (mIsRecordingVideo) {
+                if (mIsRecording) {
                     stopRecordingVideo();
                 } else {
                     startRecordingVideo();
@@ -280,7 +289,7 @@ public class CameraRecordActivity extends Fragment
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        Log.d(TAG, "onRequestPermissionsResult");
+        Log.d(LOG_TAG, "onRequestPermissionsResult");
         if (requestCode == REQUEST_VIDEO_PERMISSIONS) {
             if (grantResults.length == VIDEO_PERMISSIONS.length) {
                 for (int result : grantResults) {
@@ -321,7 +330,7 @@ public class CameraRecordActivity extends Fragment
         }
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
-            Log.d(TAG, "tryAcquire");
+            Log.d(LOG_TAG, "tryAcquire");
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
@@ -461,18 +470,22 @@ public class CameraRecordActivity extends Fragment
         if (null == activity) {
             return;
         }
+
+        // Set camera properties: fps
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mMediaRecorder.setVideoEncodingBitRate(5000000);
+        mMediaRecorder.setVideoFrameRate(30);
+//        mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
+        mMediaRecorder.setVideoSize(1280, 720);
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+
         if (mNextVideoAbsolutePath == null || mNextVideoAbsolutePath.isEmpty()) {
             mNextVideoAbsolutePath = getVideoFilePath(getActivity());
         }
         mMediaRecorder.setOutputFile(mNextVideoAbsolutePath);
-        mMediaRecorder.setVideoEncodingBitRate(5000000);
-        mMediaRecorder.setVideoFrameRate(30);
-        mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
-        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
         switch (mSensorOrientation) {
             case SENSOR_ORIENTATION_DEFAULT_DEGREES:
@@ -527,7 +540,7 @@ public class CameraRecordActivity extends Fragment
                         public void run() {
                             // UI
                             mButtonVideo.setText(R.string.stop);
-                            mIsRecordingVideo = true;
+                            mIsRecording = true;
 
                             // Start recording
                             mMediaRecorder.start();
@@ -558,7 +571,7 @@ public class CameraRecordActivity extends Fragment
 
     private void stopRecordingVideo() {
         // UI
-        mIsRecordingVideo = false;
+        mIsRecording = false;
         mButtonVideo.setText(R.string.record);
         // Stop recording
         mMediaRecorder.stop();
@@ -568,7 +581,7 @@ public class CameraRecordActivity extends Fragment
         if (null != activity) {
             Toast.makeText(activity, "Video saved: " + mNextVideoAbsolutePath,
                     Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "Video saved: " + mNextVideoAbsolutePath);
+            Log.d(LOG_TAG, "Video saved: " + mNextVideoAbsolutePath);
         }
         mNextVideoAbsolutePath = null;
         startPreview();

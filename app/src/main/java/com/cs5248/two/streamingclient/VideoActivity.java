@@ -13,7 +13,7 @@ public class VideoActivity extends Activity {
         setContentView(R.layout.activity_camera);
         if (null == savedInstanceState) {
             getFragmentManager().beginTransaction()
-                    .replace(R.id.container, CameraRecordActivity.newInstance())
+                    .replace(R.id.container, VideoFragment.newInstance())
                     .commit();
         }
     }
