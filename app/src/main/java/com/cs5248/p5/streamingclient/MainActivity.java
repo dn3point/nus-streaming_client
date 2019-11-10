@@ -224,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             String uploadUrl = PreferenceManager.getDefaultSharedPreferences(this)
                     .getString("upload_url",
-                    "http://http://monterosa.d2.comp.nus.edu.sg/~CS5248T5/post-video.php");
+                    "http://monterosa.d2.comp.nus.edu.sg/~CS5248T5/post-video.php");
             uploadObj.execute(uploadUrl);
         } catch (Exception e) {
             Log.e(LOG_TAG, e.getMessage());

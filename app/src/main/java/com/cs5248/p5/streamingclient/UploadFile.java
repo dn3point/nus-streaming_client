@@ -22,6 +22,15 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
+import static java.net.HttpURLConnection.HTTP_OK;
+
 public class UploadFile extends AsyncTask<String, Integer, Void> {
     private static final String LOG_TAG = UploadFile.class.getSimpleName();
     private static final int MAX_RETRY = 3;
@@ -37,8 +46,7 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
     private Context mContext;
 
     public UploadFile(Context context, String videoId, String segmentDir) {
-//        mVideoId = videoId;
-        mVideoId = "demo";
+        mVideoId = videoId;
         mContext = context;
         mSegmentDir = segmentDir;
     }
@@ -72,6 +80,25 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
             default:
                 break;
         }
+    }
+
+    private Response uploadSegment(String uploadUrl, String videoId, int segNum, String segUri)
+            throws IOException {
+        File segmentVideo = new File(segUri);
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("videoID", videoId)
+                .addFormDataPart("seqNUM", segNum + "")
+                .addFormDataPart("segment",
+                        segmentVideo.getName(),
+                        RequestBody.create(MediaType.parse("video/mp4"), segmentVideo))
+                .build();
+        Request request = new Request.Builder()
+                .url(uploadUrl)
+                .post(requestBody)
+                .build();
+        OkHttpClient client = new OkHttpClient();
+        return client.newCall(request).execute();
     }
 
     private HttpURLConnection setupConnection(
@@ -112,19 +139,26 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
             Log.d(LOG_TAG, "Uploading segment from " + sourceFilePath);
             publishProgress(0, i + 1);
             try {
-                HttpURLConnection conn = setupConnection(uploadUrl, mVideoId,
-                        i, sourceFilePath);
-                try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-                    String s;
-                    while ((s = br.readLine()) != null) {
-                        Log.d(LOG_TAG, s);
-                    }
-                }
-                if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                Response response = uploadSegment(uploadUrl, mVideoId, i, sourceFilePath);
+                Log.d(LOG_TAG, response.body().string());
+                if (response.code() == HTTP_OK) {
                     Log.d(LOG_TAG, "Sent" + mCurrSourceFileName + "to server");
                 } else {
                     throw new Exception("Could not upload file " + mCurrSourceFileName);
                 }
+//                HttpURLConnection conn = setupConnection(uploadUrl, mVideoId,
+//                        i, sourceFilePath);
+//                try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+//                    String s;
+//                    while ((s = br.readLine()) != null) {
+//                        Log.d(LOG_TAG, s);
+//                    }
+//                }
+//                if (conn.getResponseCode() == HTTP_OK) {
+//                    Log.d(LOG_TAG, "Sent" + mCurrSourceFileName + "to server");
+//                } else {
+//                    throw new Exception("Could not upload file " + mCurrSourceFileName);
+//                }
 
                 mNumOfAttempt = 0;
                 mNumOfUploadedSegment++;
@@ -149,21 +183,8 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
             }
         }
 
-        // FOR debug TODO remove
-//        try {
-//
-//            String file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/test.mp4";
-//            HttpURLConnection conn = setupConnection(uploadUrl, "test",
-//                    999, file);
-//            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-//                String s;
-//                while ((s = br.readLine()) != null) {
-//                    Log.d(LOG_TAG, s);
-//                }
-//            }
-//        } catch (IOException e) {
-//
-//        }
         return null;
     }
+
+
 }
