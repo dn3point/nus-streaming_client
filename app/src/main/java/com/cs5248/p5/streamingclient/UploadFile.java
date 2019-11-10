@@ -2,15 +2,19 @@ package com.cs5248.p5.streamingclient;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.cs5248.p5.streamingclient.util.CollectionUtils;
 import com.cs5248.p5.streamingclient.util.FileUtils;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -33,7 +37,8 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
     private Context mContext;
 
     public UploadFile(Context context, String videoId, String segmentDir) {
-        mVideoId = videoId;
+//        mVideoId = videoId;
+        mVideoId = "demo";
         mContext = context;
         mSegmentDir = segmentDir;
     }
@@ -74,7 +79,7 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
             throws IOException {
         String fileString = FileUtils.getStringFromFile(segUri);
         String urlParameters = videoId + "\n" + segNum + "\n" + fileString;
-        byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
+        byte[] postData = urlParameters.getBytes();
         int postDataLength = postData.length;
         URL url = new URL(uploadUrl);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -143,6 +148,22 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
                 continue;
             }
         }
+
+        // FOR debug TODO remove
+//        try {
+//
+//            String file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/test.mp4";
+//            HttpURLConnection conn = setupConnection(uploadUrl, "test",
+//                    999, file);
+//            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+//                String s;
+//                while ((s = br.readLine()) != null) {
+//                    Log.d(LOG_TAG, s);
+//                }
+//            }
+//        } catch (IOException e) {
+//
+//        }
         return null;
     }
 }

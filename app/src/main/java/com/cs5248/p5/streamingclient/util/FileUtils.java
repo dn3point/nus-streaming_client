@@ -18,8 +18,7 @@ public class FileUtils {
     }
 
     public static String getStringFromFile(String filePath) throws IOException {
-        File fl = new File(filePath);
-        FileInputStream fin = new FileInputStream(fl);
+        FileInputStream fin = new FileInputStream(filePath);
         byte[] bytes = IOUtils.toByteArray(fin);
         fin.close();
         return new String(bytes);

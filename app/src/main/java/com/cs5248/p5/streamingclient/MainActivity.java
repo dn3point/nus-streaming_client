@@ -35,6 +35,7 @@ import java.util.ArrayList;
 
 
 public class MainActivity extends AppCompatActivity {
+    private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
     ListView fileList;
     private TextView videoPopUpTitle;
@@ -46,9 +47,6 @@ public class MainActivity extends AppCompatActivity {
     private PopupWindow splitVideoPopupWindow;
     private ProgressBar splitVideoProgressBar;
     private TextView splitVideoProgressText;
-    private PopupWindow uploadVideoPopupWindow;
-    private ProgressBar uploadVideoProgressBar;
-    private TextView uploadVideoProgressText;
     private LinearLayout mainLayout;
     private Context mContext;
     private TextView mainTitleText;
@@ -66,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
                 openCamera();
             }
         });
+        mContext = getApplicationContext();
         ListAllVideos();
     }
 
@@ -165,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
                 //Call the function that splits into segments and uploads
                 String dir = FileUtils.getStoragePath(MainActivity.this);
                 segmentVideo(dir, videoTitle);
-                uploadSingleVideo(dir, videoTitle);
+                uploadVideo(dir, videoTitle);
 
             }
         });
@@ -217,36 +216,21 @@ public class MainActivity extends AppCompatActivity {
         return Myfiles;
     }
 
-    private void uploadSingleVideo(String directory, String fileName) {
-        String mainFile = directory + "/" + fileName;
-        String segmentsPath = directory + "/streamlets/" + fileName + "/";
-        File f = new File(mainFile);
-        mContext = getApplicationContext();
-        mainLayout = findViewById(R.id.content);
-
-        LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
-        View customView = inflater.inflate(R.layout.uploadvideo_progress_popup, null);
-        // Initialize a new instance of popup window
-        uploadVideoPopupWindow = new PopupWindow(
-                customView,
-                RelativeLayout.LayoutParams.WRAP_CONTENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
-        );
-
-        uploadVideoPopupWindow.setElevation(5.0f);
-        uploadVideoPopupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
-        uploadVideoProgressBar = customView.findViewById(R.id.uploadProgress);
-        uploadVideoProgressText = customView.findViewById(R.id.uploadTextView);
-        UploadFile uploadObj = new UploadFile(getApplicationContext(),
-                f.getName().substring(0, f.getName().lastIndexOf('.')),
+    private void uploadVideo(String baseDir, String videoName) {
+        String segmentsPath = baseDir + "/streamlets/" + videoName + "/";
+        UploadFile uploadObj = new UploadFile(mContext,
+                videoName.substring(0, videoName.lastIndexOf('.')),
                 segmentsPath);
         try {
-            uploadVideoPopupWindow.dismiss();
             String uploadUrl = PreferenceManager.getDefaultSharedPreferences(this)
-                    .getString("upload_url", "http://server.com/upload.php");
+                    .getString("upload_url",
+                    "http://http://monterosa.d2.comp.nus.edu.sg/~CS5248T5/post-video.php");
             uploadObj.execute(uploadUrl);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
+            Toast.makeText(mContext, "Upload " + videoName + "failed. Please try again.",
+                    Toast.LENGTH_SHORT).show();
+
         }
     }
 
@@ -282,14 +266,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void segmentVideo(String directorypath, String fileName) {
+    private void segmentVideo(String baseDir, String videoName) {
         //Segment the video in splits of 3 seconds
-        Log.i("DASH", "Inside segmentVideo()");
+        Log.d(LOG_TAG, "Inside segmentVideo()");
         //ArrayList<String> filesinfolder = getFiles(directorypath);
-        String filepath = directorypath + "/" + fileName;
+        String filepath = baseDir + "/" + videoName;
         File f = new File(filepath);
         outputPath = getSegmentFolder(f.getName());
-        Log.i("DASH", "Path where segments have to be saved is " + outputPath);
+        Log.d(LOG_TAG, "Path where segments have to be saved is " + outputPath);
 
         //open a popup for the progress bar and then pass it to the segment function
         mContext = getApplicationContext();
