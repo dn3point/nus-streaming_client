@@ -1,4 +1,4 @@
-package com.cs5248.two.streamingclient;
+package com.cs5248.p5.streamingclient;
 
 import android.content.Context;
 import android.content.Intent;
@@ -27,7 +27,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 import androidx.preference.PreferenceManager;
 
-import com.cs5248.two.streamingclient.util.FileUtils;
+import com.cs5248.p5.streamingclient.R;
+import com.cs5248.p5.streamingclient.util.FileUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
@@ -238,7 +239,11 @@ public class MainActivity extends AppCompatActivity {
         uploadVideoPopupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
         uploadVideoProgressBar = customView.findViewById(R.id.uploadProgress);
         uploadVideoProgressText = customView.findViewById(R.id.uploadTextView);
-        UploadFile uploadObj = new UploadFile(uploadVideoProgressBar, uploadVideoProgressText, segmentsPath, f.getName(), "Samsung Galaxy Tab", uploadVideoPopupWindow);
+        UploadFile uploadObj = new UploadFile(uploadVideoProgressBar,
+                uploadVideoProgressText,
+                segmentsPath,
+                f.getName().substring(0, f.getName().lastIndexOf('.')),
+                uploadVideoPopupWindow);
         try {
             String uploadUrl = PreferenceManager.getDefaultSharedPreferences(this)
                     .getString("upload_url", "http://server.com/upload.php");

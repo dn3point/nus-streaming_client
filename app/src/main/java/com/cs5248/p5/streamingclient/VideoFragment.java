@@ -1,4 +1,4 @@
-package com.cs5248.two.streamingclient;
+package com.cs5248.p5.streamingclient;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -22,8 +22,6 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
-import android.media.CamcorderProfile;
-import android.media.CameraProfile;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -42,6 +40,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.legacy.app.ActivityCompat;
 import androidx.legacy.app.FragmentCompat;
+
+import com.cs5248.p5.streamingclient.R;
 
 import java.io.File;
 import java.io.IOException;

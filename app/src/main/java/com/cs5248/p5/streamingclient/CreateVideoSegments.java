@@ -1,4 +1,4 @@
-package com.cs5248.two.streamingclient;
+package com.cs5248.p5.streamingclient;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -24,6 +24,7 @@ import java.util.List;
 
 
 public class CreateVideoSegments extends AsyncTask<String, Double, Integer> {
+    private static final String LOG_TAG = CreateVideoSegments.class.getSimpleName();
 
     private String videoPath;
     private String outputPath;
@@ -41,16 +42,15 @@ public class CreateVideoSegments extends AsyncTask<String, Double, Integer> {
         this.segmentProgress = segmentProgress;
         this.textview = textView;
         this.popUp = popUp;
-
     }
 
     @Override
     protected Integer doInBackground(String... params) {
+        Log.d(LOG_TAG, "Inside split background function ");
 
-        Log.i("DASH", "Inside split background function ");
-
-        if (params.length != 3)
+        if (params == null || params.length < 3) {
             throw new IllegalArgumentException("Not enough params");
+        }
 
         String path = params[0];
         String destPath = params[1];
@@ -77,27 +77,6 @@ public class CreateVideoSegments extends AsyncTask<String, Double, Integer> {
         videoPath = path;
         outputPath = destinationPath;
         filename = new File(videoPath).getName().replace(".mp4", "");
-        /*
-        Movie movie = null;
-        try {
-            movie = MovieCreator.build(videoPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("Total movie time is = "+movie.getTimescale());
-        List<Track> tracks = movie.getTracks();
-        Track track = tracks.get(0);
-        videoTime = correctSyncSamples(track, 50000, true);
-
-        int fullvideotime = (int) videoTime;
-        int totalsegments = fullvideotime/3;
-        if(fullvideotime%3 != 0){
-            totalsegments++;
-        }
-        System.out.println ("Total segments needed is " + totalsegments);
-        Log.i("DASH" , "Total segments needed is  "+ totalsegments);
-        */
         long start1 = System.currentTimeMillis();
         try {
             while (performSplit(startTime, startTime + splitDuration, segmentNumber)) {
@@ -169,16 +148,12 @@ public class CreateVideoSegments extends AsyncTask<String, Double, Integer> {
             Log.i("TAG", "Start time is = " + startTime + ", End time is = " + endTime);
             movie.addTrack(new CroppedTrack(track, startSample1, endSample1));
         }
-        long start1 = System.currentTimeMillis();
         Container out = new DefaultMp4Builder().build(movie);
-        long start2 = System.currentTimeMillis();
         FileOutputStream fos = new FileOutputStream(outputPath + String.format("%s_%d.mp4", filename, segmentNumber));
         FileChannel fc = fos.getChannel();
         out.writeContainer(fc);
-
         fc.close();
         fos.close();
-        long start3 = System.currentTimeMillis();
         return true;
     }
 

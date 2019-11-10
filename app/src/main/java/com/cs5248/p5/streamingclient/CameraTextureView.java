@@ -1,4 +1,4 @@
-package com.cs5248.two.streamingclient;
+package com.cs5248.p5.streamingclient;
 
 import android.content.Context;
 import android.util.AttributeSet;

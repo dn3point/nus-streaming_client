@@ -1,4 +1,4 @@
-package com.cs5248.two.streamingclient.util;
+package com.cs5248.p5.streamingclient.util;
 
 public class CollectionUtils {
     public static boolean isEmpty(String[] strArr) {

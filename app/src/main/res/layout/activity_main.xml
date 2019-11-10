@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity">
+    tools:context="com.cs5248.p5.streamingclient.MainActivity">
 
     <LinearLayout
         android:id="@+id/content"
