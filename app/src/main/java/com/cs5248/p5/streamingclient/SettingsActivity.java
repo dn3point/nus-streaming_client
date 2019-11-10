@@ -6,8 +6,6 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceFragmentCompat;
 
-import com.cs5248.p5.streamingclient.R;
-
 public class SettingsActivity extends AppCompatActivity {
 
     @Override

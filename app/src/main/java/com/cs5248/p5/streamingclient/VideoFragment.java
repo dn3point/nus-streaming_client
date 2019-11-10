@@ -41,8 +41,6 @@ import androidx.annotation.NonNull;
 import androidx.legacy.app.ActivityCompat;
 import androidx.legacy.app.FragmentCompat;
 
-import com.cs5248.p5.streamingclient.R;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -156,24 +154,6 @@ public class VideoFragment extends Fragment
         return new VideoFragment();
     }
 
-    /**
-     * Choose video size
-     * @param choices available size array
-     * @return Suitable video size
-     */
-    private Size chooseVideoSize(Size[] choices) {
-
-        for (Size size : choices) {
-            if (size.getWidth() == size.getHeight() * 4 / 3 && size.getWidth() <= 720) {
-                Log.d(LOG_TAG, size.toString());
-                return size;
-            }
-        }
-        Log.d(LOG_TAG, "No suitable video size, select: "
-                + choices[choices.length - 1].toString());
-        return choices[choices.length - 1];
-    }
-
     private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
         // Collect the supported resolutions that are at least as big as the preview Surface
         List<Size> bigEnough = new ArrayList<>();
@@ -193,6 +173,25 @@ public class VideoFragment extends Fragment
             Log.e(LOG_TAG, "Couldn't find any suitable preview size");
             return choices[0];
         }
+    }
+
+    /**
+     * Choose video size
+     *
+     * @param choices available size array
+     * @return Suitable video size
+     */
+    private Size chooseVideoSize(Size[] choices) {
+
+        for (Size size : choices) {
+            if (size.getWidth() == size.getHeight() * 4 / 3 && size.getWidth() <= 720) {
+                Log.d(LOG_TAG, size.toString());
+                return size;
+            }
+        }
+        Log.d(LOG_TAG, "No suitable video size, select: "
+                + choices[choices.length - 1].toString());
+        return choices[choices.length - 1];
     }
 
     @Override

@@ -27,7 +27,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 import androidx.preference.PreferenceManager;
 
-import com.cs5248.p5.streamingclient.R;
 import com.cs5248.p5.streamingclient.util.FileUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -94,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         ListAllVideos();
     }
-
 
 
     public void ListAllVideos() {
@@ -239,12 +237,11 @@ public class MainActivity extends AppCompatActivity {
         uploadVideoPopupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
         uploadVideoProgressBar = customView.findViewById(R.id.uploadProgress);
         uploadVideoProgressText = customView.findViewById(R.id.uploadTextView);
-        UploadFile uploadObj = new UploadFile(uploadVideoProgressBar,
-                uploadVideoProgressText,
-                segmentsPath,
+        UploadFile uploadObj = new UploadFile(getApplicationContext(),
                 f.getName().substring(0, f.getName().lastIndexOf('.')),
-                uploadVideoPopupWindow);
+                segmentsPath);
         try {
+            uploadVideoPopupWindow.dismiss();
             String uploadUrl = PreferenceManager.getDefaultSharedPreferences(this)
                     .getString("upload_url", "http://server.com/upload.php");
             uploadObj.execute(uploadUrl);

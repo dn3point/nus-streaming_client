@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.cs5248.p5.streamingclient.R;
-
 public class VideoActivity extends Activity {
     private static final String LOG_TAG = VideoActivity.class.getSimpleName();
 
