@@ -2,24 +2,17 @@ package com.cs5248.p5.streamingclient;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.cs5248.p5.streamingclient.util.CollectionUtils;
 import com.cs5248.p5.streamingclient.util.FileUtils;
 
-import org.apache.commons.io.IOUtils;
-
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import okhttp3.MediaType;
@@ -31,8 +24,8 @@ import okhttp3.Response;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 
-public class UploadFile extends AsyncTask<String, Integer, Void> {
-    private static final String LOG_TAG = UploadFile.class.getSimpleName();
+public class UploadVideoTask extends AsyncTask<String, Integer, Void> {
+    private static final String LOG_TAG = UploadVideoTask.class.getSimpleName();
     private static final int MAX_RETRY = 3;
 
     private String mVideoId;
@@ -45,7 +38,7 @@ public class UploadFile extends AsyncTask<String, Integer, Void> {
 
     private Context mContext;
 
-    public UploadFile(Context context, String videoId, String segmentDir) {
+    public UploadVideoTask(Context context, String videoId, String segmentDir) {
         mVideoId = videoId;
         mContext = context;
         mSegmentDir = segmentDir;

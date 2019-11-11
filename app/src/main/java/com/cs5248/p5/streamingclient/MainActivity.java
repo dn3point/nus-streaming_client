@@ -17,7 +17,6 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,9 +43,6 @@ public class MainActivity extends AppCompatActivity {
     private TextView videoPopupDelete;
     private String outputPath;
     private PopupWindow videoPopupWindow;
-    private PopupWindow splitVideoPopupWindow;
-    private ProgressBar splitVideoProgressBar;
-    private TextView splitVideoProgressText;
     private LinearLayout mainLayout;
     private Context mContext;
     private TextView mainTitleText;
@@ -139,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
 
         videoPopupWindow.setElevation(5.0f);
 
-        ImageButton closeButton = customView.findViewById(R.id.ib_close);
+        ImageButton closeButton = customView.findViewById(R.id.btn_close);
 
         // Set a click listener for the popup window close button
         closeButton.setOnClickListener(new View.OnClickListener() {
@@ -151,10 +147,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         videoPopupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
-        videoPopUpTitle = customView.findViewById(R.id.videopopup_title);
+        videoPopUpTitle = customView.findViewById(R.id.popup_txt_title);
         videoPopUpTitle.setText(videoName);
         //set listeners for play, upload and delete buttons
-        videoPopupUpload = customView.findViewById(R.id.videopopup_upload);
+        videoPopupUpload = customView.findViewById(R.id.popup_txt_upload_video);
         videoPopupUpload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -169,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        videoPopupDelete = customView.findViewById(R.id.videopopup_delete);
+        videoPopupDelete = customView.findViewById(R.id.popup_txt_delete_video);
         videoPopupDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -182,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        videoPopupPlay = customView.findViewById(R.id.videopopup_play);
+        videoPopupPlay = customView.findViewById(R.id.popup_txt_play_video);
         videoPopupPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -218,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void uploadVideo(String baseDir, String videoName) {
         String segmentsPath = baseDir + "/streamlets/" + videoName + "/";
-        UploadFile uploadObj = new UploadFile(mContext,
+        UploadVideoTask uploadObj = new UploadVideoTask(mContext,
                 videoName.substring(0, videoName.lastIndexOf('.')),
                 segmentsPath);
         try {
@@ -275,25 +271,7 @@ public class MainActivity extends AppCompatActivity {
         outputPath = getSegmentFolder(f.getName());
         Log.d(LOG_TAG, "Path where segments have to be saved is " + outputPath);
 
-        //open a popup for the progress bar and then pass it to the segment function
-        mContext = getApplicationContext();
-        mainLayout = findViewById(R.id.content);
-
-        LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
-        View customView = inflater.inflate(R.layout.splitvideo_progress_popup, null);
-        // Initialize a new instance of popup window
-        splitVideoPopupWindow = new PopupWindow(
-                customView,
-                RelativeLayout.LayoutParams.WRAP_CONTENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
-        );
-
-        splitVideoPopupWindow.setElevation(5.0f);
-        splitVideoPopupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
-        splitVideoProgressBar = customView.findViewById(R.id.segmentProgress);
-        splitVideoProgressText = customView.findViewById(R.id.segmentTextView);
-
-        CreateVideoSegments obj = new CreateVideoSegments(splitVideoProgressBar, splitVideoProgressText, splitVideoPopupWindow);
+        SegmentVideoTask obj = new SegmentVideoTask(mContext);
         try {
             obj.execute(filepath, outputPath, "3.0");
         } catch (Exception e) {

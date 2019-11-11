@@ -3,27 +3,29 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.cs5248.p5.streamingclient.CameraTextureView
+    <com.cs5248.p5.streamingclient.VideoTextureView
         android:id="@+id/texture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true" />
 
     <FrameLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_below="@id/texture"
+
         android:background="#000000"
-        android:id="@+id/frameLayout">
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/video"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
+            android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="@string/record" />
 

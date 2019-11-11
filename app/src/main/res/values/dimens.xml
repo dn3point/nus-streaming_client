@@ -2,4 +2,6 @@
 <resources>
     <dimen name="list_title">20sp</dimen>
     <dimen name="list_view_margin">15dp</dimen>
+    <dimen name="popup_font_size">8pt</dimen>
+    <dimen name="popup_padding">24sp</dimen>
 </resources>

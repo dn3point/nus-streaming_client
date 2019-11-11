@@ -1,10 +1,9 @@
 package com.cs5248.p5.streamingclient;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.PopupWindow;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import com.coremedia.iso.boxes.Container;
 import com.googlecode.mp4parser.authoring.Movie;
@@ -23,50 +22,39 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-public class CreateVideoSegments extends AsyncTask<String, Double, Integer> {
-    private static final String LOG_TAG = CreateVideoSegments.class.getSimpleName();
+public class SegmentVideoTask extends AsyncTask<String, Integer, Integer> {
+    private static final String LOG_TAG = SegmentVideoTask.class.getSimpleName();
 
     private String videoPath;
     private String outputPath;
     private String filename;
     private boolean set;
     private double videoTime;
-    private double percentage;
     private int segmentNumber;
-    private ProgressBar segmentProgress;
-    private TextView textview;
-    private PopupWindow popUp;
+    private Context mContext;
 
 
-    public CreateVideoSegments(ProgressBar segmentProgress, TextView textView, PopupWindow popUp) {
-        this.segmentProgress = segmentProgress;
-        this.textview = textView;
-        this.popUp = popUp;
+    public SegmentVideoTask(Context context) {
+        mContext = context;
     }
 
     @Override
     protected Integer doInBackground(String... params) {
-        Log.d(LOG_TAG, "Inside split background function ");
-
         if (params == null || params.length < 3) {
-            throw new IllegalArgumentException("Not enough params");
+            throw new IllegalArgumentException("Invalid input parameters");
         }
 
         String path = params[0];
         String destPath = params[1];
         double splitDuration = Double.parseDouble(params[2]);
-        return Integer.valueOf(this.split(path, destPath, splitDuration));
+        return Integer.valueOf(split(path, destPath, splitDuration));
     }
 
     @Override
     protected void onPreExecute() {
-        segmentProgress.setMax(100);
+        Toast.makeText(mContext, "Start to segment video", Toast.LENGTH_SHORT).show();
     }
 
-    @Override
-    protected void onPostExecute(Integer result) {
-        popUp.dismiss();
-    }
 
     public int split(String path, String destinationPath, double splitDuration) {
         double startTime = 0.00;
@@ -118,8 +106,8 @@ public class CreateVideoSegments extends AsyncTask<String, Double, Integer> {
             }
         }
 
-        percentage = (startTime * 100) / videoTime;
-        publishProgress(percentage);
+//        percentage = (startTime * 100) / videoTime;
+//        publishProgress(percentage);
 
         if (startTime == endTime)
             return false;
@@ -158,10 +146,11 @@ public class CreateVideoSegments extends AsyncTask<String, Double, Integer> {
     }
 
     @Override
-    protected void onProgressUpdate(Double... values) {
-        segmentProgress.setProgress(values[0].intValue());
-        //Updates the number of segments done below Progress Bar on UI
-        textview.setText(segmentNumber - 1 + " segments created");
+    protected void onProgressUpdate(Integer... values) {
+        int type = values[0];
+        switch (type) {
+
+        }
     }
 
     private double correctSyncSamples(Track track, double endLimit, boolean next) {

@@ -4,30 +4,21 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.TextureView;
 
-public class CameraTextureView extends TextureView {
+public class VideoTextureView extends TextureView {
 
     private int mRatioWidth = 0;
     private int mRatioHeight = 0;
 
-    public CameraTextureView(Context context) {
+    public VideoTextureView(Context context) {
         this(context, null);
     }
 
-    public CameraTextureView(Context context, AttributeSet attrs) {
+    public VideoTextureView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public CameraTextureView(Context context, AttributeSet attrs, int defStyle) {
+    public VideoTextureView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-    }
-
-    public void setAspectRatio(int width, int height) {
-        if (width < 0 || height < 0) {
-            throw new IllegalArgumentException("Size cannot be negative.");
-        }
-        mRatioWidth = width;
-        mRatioHeight = height;
-        requestLayout();
     }
 
     @Override
@@ -44,6 +35,15 @@ public class CameraTextureView extends TextureView {
                 setMeasuredDimension(height * mRatioWidth / mRatioHeight, height);
             }
         }
+    }
+
+    public void setAspectRatio(int width, int height) {
+        if (width < 0 || height < 0) {
+            throw new IllegalArgumentException("Invalid size");
+        }
+        mRatioWidth = width;
+        mRatioHeight = height;
+        requestLayout();
     }
 
 }

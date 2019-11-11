@@ -86,7 +86,7 @@ public class VideoFragment extends Fragment
     private HandlerThread mBackgroundThread;
     private Handler mBackgroundHandler;
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
-    private CameraTextureView mTextureView;
+    private VideoTextureView mTextureView;
     private Button mButtonVideo;
     private CameraDevice mCameraDevice;
     private CameraCaptureSession mPreviewSession;
@@ -197,7 +197,7 @@ public class VideoFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.camera_recorder, container, false);
+        return inflater.inflate(R.layout.video_record, container, false);
     }
 
     @Override
@@ -233,16 +233,6 @@ public class VideoFragment extends Fragment
                     stopRecordingVideo();
                 } else {
                     startRecordingVideo();
-                }
-                break;
-            }
-            case R.id.info: {
-                Activity activity = getActivity();
-                if (null != activity) {
-                    new AlertDialog.Builder(activity)
-                            .setMessage(R.string.intro_message)
-                            .setPositiveButton(android.R.string.ok, null)
-                            .show();
                 }
                 break;
             }
@@ -288,19 +278,20 @@ public class VideoFragment extends Fragment
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        Log.d(LOG_TAG, "onRequestPermissionsResult");
         if (requestCode == REQUEST_VIDEO_PERMISSIONS) {
             if (grantResults.length == VIDEO_PERMISSIONS.length) {
                 for (int result : grantResults) {
                     if (result != PackageManager.PERMISSION_GRANTED) {
-                        ErrorDialog.newInstance(getString(R.string.permission_request))
-                                .show(getChildFragmentManager(), FRAGMENT_DIALOG);
+                        Toast.makeText(getContext(),
+                                R.string.permission_msg,
+                                Toast.LENGTH_SHORT).show();
                         break;
                     }
                 }
             } else {
-                ErrorDialog.newInstance(getString(R.string.permission_request))
-                        .show(getChildFragmentManager(), FRAGMENT_DIALOG);
+                Toast.makeText(getContext(),
+                        R.string.permission_msg,
+                        Toast.LENGTH_SHORT).show();
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -357,14 +348,11 @@ public class VideoFragment extends Fragment
             configureTransform(width, height);
             mMediaRecorder = new MediaRecorder();
             manager.openCamera(cameraId, mStateCallback, null);
-        } catch (CameraAccessException e) {
-            Toast.makeText(activity, "Cannot access the camera.", Toast.LENGTH_SHORT).show();
+        } catch (CameraAccessException | NullPointerException e) {
+            Toast.makeText(activity, "No access to camera.", Toast.LENGTH_SHORT).show();
             activity.finish();
-        } catch (NullPointerException e) {
-            ErrorDialog.newInstance(getString(R.string.camera_error))
-                    .show(getChildFragmentManager(), FRAGMENT_DIALOG);
         } catch (InterruptedException e) {
-            throw new RuntimeException("Interrupted while trying to lock camera opening.");
+            throw new RuntimeException("Interrupted");
         }
     }
 
@@ -597,41 +585,13 @@ public class VideoFragment extends Fragment
 
     }
 
-    public static class ErrorDialog extends DialogFragment {
-
-        private static final String ARG_MESSAGE = "message";
-
-        public static ErrorDialog newInstance(String message) {
-            ErrorDialog dialog = new ErrorDialog();
-            Bundle args = new Bundle();
-            args.putString(ARG_MESSAGE, message);
-            dialog.setArguments(args);
-            return dialog;
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            final Activity activity = getActivity();
-            return new AlertDialog.Builder(activity)
-                    .setMessage(getArguments().getString(ARG_MESSAGE))
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            activity.finish();
-                        }
-                    })
-                    .create();
-        }
-
-    }
-
     public static class ConfirmationDialog extends DialogFragment {
 
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Fragment parent = getParentFragment();
             return new AlertDialog.Builder(getActivity())
-                    .setMessage(R.string.permission_request)
+                    .setMessage(R.string.permission_msg)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {

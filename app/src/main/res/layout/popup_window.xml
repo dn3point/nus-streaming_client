@@ -1,69 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/rl_custom_layout"
+    android:id="@+id/popup_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="2dp"
-    android:background="#ffffff"
-    >
+    android:background="#ffffff">
+
     <ImageButton
-        android:id="@+id/ib_close"
+        android:id="@+id/btn_close"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@android:drawable/ic_menu_close_clear_cancel"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
         android:background="@null"
-        />
+        android:contentDescription="@string/btn_close" />
 
     <TextView
-        android:id="@+id/videopopup_title"
+        android:id="@+id/popup_txt_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/ib_close"
+        android:layout_below="@+id/btn_close"
         android:layout_marginStart="19dp"
         android:layout_marginTop="22dp"
-        android:text="Video Title"
+        android:text="@string/title_video_list"
         android:textAlignment="textStart"
         android:textAppearance="@style/TextAppearance.AppCompat"
-        android:textSize="24sp"
+        android:textSize="@dimen/popup_font_size"
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/videopopup_play"
+        android:id="@+id/popup_txt_play_video"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/videopopup_title"
+        android:layout_below="@id/popup_txt_title"
         android:layout_centerHorizontal="true"
-        android:padding="25sp"
-        android:text="Play Video"
+        android:padding="@dimen/popup_padding"
+        android:text="@string/txt_play_video"
         android:textAllCaps="true"
         android:clickable="true"
-        android:textSize="18sp" />
+        android:focusable="true"
+        android:textSize="@dimen/popup_font_size" />
 
     <TextView
-        android:id="@+id/videopopup_upload"
+        android:id="@+id/popup_txt_upload_video"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/videopopup_play"
+        android:layout_below="@id/popup_txt_play_video"
         android:layout_centerHorizontal="true"
-        android:padding="25sp"
-        android:text="Upload Video"
+        android:padding="@dimen/popup_padding"
+        android:text="@string/txt_upload_video"
         android:textAllCaps="true"
         android:clickable="true"
-        android:textSize="18sp" />
+        android:focusable="true"
+        android:textSize="@dimen/popup_font_size" />
 
     <TextView
-        android:id="@+id/videopopup_delete"
+        android:id="@+id/popup_txt_delete_video"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/videopopup_upload"
+        android:layout_below="@id/popup_txt_upload_video"
         android:layout_centerHorizontal="true"
-        android:padding="25sp"
-        android:text="Delete Video"
+        android:padding="@dimen/popup_padding"
+        android:text="@string/txt_delete_video"
         android:textAllCaps="true"
         android:clickable="true"
-        android:textSize="18sp" />
+        android:focusable="true"
+        android:textSize="@dimen/popup_font_size" />
+
 </RelativeLayout>

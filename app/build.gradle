@@ -4,7 +4,7 @@ android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
     defaultConfig {
-        applicationId "com.cs5248.two.streamingclient"
+        applicationId "com.cs5248.p5.streamingclient"
         minSdkVersion 24
         targetSdkVersion 29
         versionCode 1
