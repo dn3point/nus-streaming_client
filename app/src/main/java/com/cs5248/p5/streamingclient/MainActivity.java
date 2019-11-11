@@ -156,7 +156,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 videoPopupWindow.dismiss();
                 String videoTitle = videoPopUpTitle.getText().toString();
-                Toast.makeText(MainActivity.this, "Splitting and uploading the video : " + videoTitle, Toast.LENGTH_LONG).show();
                 //Call the function that splits into segments and uploads
                 String dir = FileUtils.getStoragePath(MainActivity.this);
                 segmentVideo(dir, videoTitle);
@@ -171,7 +170,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 videoPopupWindow.dismiss();
                 String videoTitle = videoPopUpTitle.getText().toString();
-                Toast.makeText(MainActivity.this, "Deleting the video : " + videoTitle, Toast.LENGTH_LONG).show();
                 //Call the function that splits into segments and uploads
                 String dir = FileUtils.getStoragePath(MainActivity.this);
                 deleteVideo(dir, videoTitle);
@@ -184,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 videoPopupWindow.dismiss();
                 String videoTitle = videoPopUpTitle.getText().toString();
-                Toast.makeText(MainActivity.this, "Playing the video : " + videoTitle, Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Playing the video : " + videoTitle, Toast.LENGTH_SHORT).show();
                 //Call the function that splits into segments and uploads
                 String dir = FileUtils.getStoragePath(MainActivity.this);
                 playVideo(dir, videoTitle);
@@ -242,6 +240,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         dir.delete();
+        Toast.makeText(mContext,
+                "Deleted video " + fileName + " and its segements.",
+                Toast.LENGTH_SHORT).show();
         ListAllVideos();
     }
 
@@ -273,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
 
         SegmentVideoTask obj = new SegmentVideoTask(mContext);
         try {
-            obj.execute(filepath, outputPath, "3.0");
+            obj.execute(filepath, outputPath, videoName.substring(0, videoName.lastIndexOf('.')));
         } catch (Exception e) {
             e.printStackTrace();
         }
