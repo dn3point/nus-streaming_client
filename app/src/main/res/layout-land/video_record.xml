@@ -4,7 +4,7 @@
     android:layout_height="match_parent">
 
     <com.cs5248.p5.streamingclient.VideoTextureView
-        android:id="@+id/texture"
+        android:id="@+id/video_texture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -17,13 +17,13 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
-        android:layout_below="@id/texture"
+        android:layout_below="@id/video_texture"
 
         android:background="#000000"
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/video"
+            android:id="@+id/record_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"

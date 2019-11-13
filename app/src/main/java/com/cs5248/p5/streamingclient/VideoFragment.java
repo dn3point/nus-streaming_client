@@ -41,7 +41,8 @@ import androidx.annotation.NonNull;
 import androidx.legacy.app.ActivityCompat;
 import androidx.legacy.app.FragmentCompat;
 
-import java.io.File;
+import com.cs5248.p5.streamingclient.util.FileUtils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -80,7 +81,6 @@ public class VideoFragment extends Fragment
     }
 
     private Size mPreviewSize;
-    private Size mVideoSize;
     private MediaRecorder mMediaRecorder;
     private boolean mIsRecording;
     private HandlerThread mBackgroundThread;
@@ -91,107 +91,11 @@ public class VideoFragment extends Fragment
     private CameraDevice mCameraDevice;
     private CameraCaptureSession mPreviewSession;
     private Integer mSensorOrientation;
-    private String mNextVideoAbsolutePath;
+    private String mVideoPath;
     private CaptureRequest.Builder mPreviewBuilder;
-    private CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
-
-        @Override
-        public void onOpened(@NonNull CameraDevice cameraDevice) {
-            mCameraDevice = cameraDevice;
-            startPreview();
-            mCameraOpenCloseLock.release();
-            if (null != mTextureView) {
-                configureTransform(mTextureView.getWidth(), mTextureView.getHeight());
-            }
-        }
-
-        @Override
-        public void onDisconnected(@NonNull CameraDevice cameraDevice) {
-            mCameraOpenCloseLock.release();
-            cameraDevice.close();
-            mCameraDevice = null;
-        }
-
-        @Override
-        public void onError(@NonNull CameraDevice cameraDevice, int error) {
-            mCameraOpenCloseLock.release();
-            cameraDevice.close();
-            mCameraDevice = null;
-            Activity activity = getActivity();
-            if (null != activity) {
-                activity.finish();
-            }
-        }
-
-    };
-    private TextureView.SurfaceTextureListener mSurfaceTextureListener
-            = new TextureView.SurfaceTextureListener() {
-
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture,
-                                              int width, int height) {
-            openCamera(width, height);
-        }
-
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture,
-                                                int width, int height) {
-            configureTransform(width, height);
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
-            return true;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
-        }
-
-    };
 
     public static VideoFragment newInstance() {
         return new VideoFragment();
-    }
-
-    private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
-        // Collect the supported resolutions that are at least as big as the preview Surface
-        List<Size> bigEnough = new ArrayList<>();
-        int w = aspectRatio.getWidth();
-        int h = aspectRatio.getHeight();
-        for (Size option : choices) {
-            if (option.getHeight() == option.getWidth() * h / w &&
-                    option.getWidth() >= width && option.getHeight() >= height) {
-                bigEnough.add(option);
-            }
-        }
-
-        // Pick the smallest of those, assuming we found any
-        if (bigEnough.size() > 0) {
-            return Collections.min(bigEnough, new CompareSizesByArea());
-        } else {
-            Log.e(LOG_TAG, "Couldn't find any suitable preview size");
-            return choices[0];
-        }
-    }
-
-    /**
-     * Choose video size
-     *
-     * @param choices available size array
-     * @return Suitable video size
-     */
-    private Size chooseVideoSize(Size[] choices) {
-
-        for (Size size : choices) {
-            if (size.getWidth() == size.getHeight() * 4 / 3 && size.getWidth() <= 720) {
-                Log.d(LOG_TAG, size.toString());
-                return size;
-            }
-        }
-        Log.d(LOG_TAG, "No suitable video size, select: "
-                + choices[choices.length - 1].toString());
-        return choices[choices.length - 1];
     }
 
     @Override
@@ -202,8 +106,8 @@ public class VideoFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        mTextureView = view.findViewById(R.id.texture);
-        mButtonVideo = view.findViewById(R.id.video);
+        mTextureView = view.findViewById(R.id.video_texture);
+        mButtonVideo = view.findViewById(R.id.record_button);
         mButtonVideo.setOnClickListener(this);
     }
 
@@ -214,7 +118,28 @@ public class VideoFragment extends Fragment
         if (mTextureView.isAvailable()) {
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
-            mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+            mTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+
+                @Override
+                public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
+                    openCamera(width, height);
+                }
+
+                @Override
+                public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int width, int height) {
+                    configureTransform(width, height);
+                }
+
+                @Override
+                public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
+                    return true;
+                }
+
+                @Override
+                public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
+                }
+
+            });
         }
     }
 
@@ -228,50 +153,14 @@ public class VideoFragment extends Fragment
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.video: {
+            case R.id.record_button: {
                 if (mIsRecording) {
-                    stopRecordingVideo();
+                    stopRecording();
                 } else {
-                    startRecordingVideo();
+                    startRecording();
                 }
                 break;
             }
-        }
-    }
-
-
-    private void startBackgroundThread() {
-        mBackgroundThread = new HandlerThread("CameraBackground");
-        mBackgroundThread.start();
-        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
-    }
-
-    private void stopBackgroundThread() {
-        mBackgroundThread.quitSafely();
-        try {
-            mBackgroundThread.join();
-            mBackgroundThread = null;
-            mBackgroundHandler = null;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private boolean shouldShowRequestPermissionRationale(String[] permissions) {
-        for (String permission : permissions) {
-            if (FragmentCompat.shouldShowRequestPermissionRationale(this, permission)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-    private void requestVideoPermissions() {
-        if (shouldShowRequestPermissionRationale(VIDEO_PERMISSIONS)) {
-            new ConfirmationDialog().show(getChildFragmentManager(), FRAGMENT_DIALOG);
-        } else {
-            FragmentCompat.requestPermissions(this, VIDEO_PERMISSIONS, REQUEST_VIDEO_PERMISSIONS);
         }
     }
 
@@ -298,7 +187,50 @@ public class VideoFragment extends Fragment
         }
     }
 
-    private boolean hasPermissionsGranted(String[] permissions) {
+
+    private Size chooseVideoSize(Size[] choices) {
+        for (Size size : choices) {
+            if (size.getWidth() == size.getHeight() * 4 / 3 && size.getWidth() <= 1280) {
+                Log.d(LOG_TAG, size.toString());
+                return size;
+            }
+        }
+        Size defaultSize = choices[choices.length - 1];
+        Log.d(LOG_TAG, "No suitable video size, select: " + defaultSize.toString());
+        return choices[choices.length - 1];
+    }
+
+    private Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
+        int w = aspectRatio.getWidth();
+        int h = aspectRatio.getHeight();
+        List<Size> bigEnough = new ArrayList<>();
+        for (Size option : choices) {
+            if (option.getHeight() == option.getWidth() * h / w &&
+                    option.getWidth() >= width && option.getHeight() >= height) {
+                bigEnough.add(option);
+            }
+        }
+        return bigEnough.isEmpty() ? choices[0] : Collections.min(bigEnough, new CompareSizesByArea());
+    }
+
+    private void startBackgroundThread() {
+        mBackgroundThread = new HandlerThread("CameraBackground");
+        mBackgroundThread.start();
+        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
+    }
+
+    private void stopBackgroundThread() {
+        mBackgroundThread.quitSafely();
+        try {
+            mBackgroundThread.join();
+            mBackgroundThread = null;
+            mBackgroundHandler = null;
+        } catch (InterruptedException e) {
+            Log.e(LOG_TAG, e.getMessage());
+        }
+    }
+
+    private boolean hasPermissions(String[] permissions) {
         for (String permission : permissions) {
             if (ActivityCompat.checkSelfPermission(getActivity(), permission)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -308,34 +240,48 @@ public class VideoFragment extends Fragment
         return true;
     }
 
+    private void requestPermissions() {
+        if (shouldRequestPermission(VIDEO_PERMISSIONS)) {
+            new ConfirmationDialog().show(getChildFragmentManager(), FRAGMENT_DIALOG);
+        } else {
+            FragmentCompat.requestPermissions(this, VIDEO_PERMISSIONS, REQUEST_VIDEO_PERMISSIONS);
+        }
+    }
+
+    private boolean shouldRequestPermission(String[] permissions) {
+        for (String permission : permissions) {
+            if (FragmentCompat.shouldShowRequestPermissionRationale(this, permission)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @SuppressLint("MissingPermission")
     private void openCamera(int width, int height) {
-        if (!hasPermissionsGranted(VIDEO_PERMISSIONS)) {
-            requestVideoPermissions();
+        if (!hasPermissions(VIDEO_PERMISSIONS)) {
+            requestPermissions();
             return;
         }
         final Activity activity = getActivity();
-        if (null == activity || activity.isFinishing()) {
+        if (activity == null || activity.isFinishing()) {
             return;
         }
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
-            Log.d(LOG_TAG, "tryAcquire");
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
-                throw new RuntimeException("Time out waiting to lock camera opening.");
+                throw new RuntimeException("Time out to lock camera.");
             }
             String cameraId = manager.getCameraIdList()[0];
-
-            // Choose the sizes for camera preview and video recording
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap map = characteristics
                     .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
             if (map == null) {
-                throw new RuntimeException("Cannot get available preview/video sizes");
+                throw new RuntimeException("Cannot get available sizes");
             }
 
-            mVideoSize = chooseVideoSize(map.getOutputSizes(MediaRecorder.class));
+            Size mVideoSize = chooseVideoSize(map.getOutputSizes(MediaRecorder.class));
             mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
                     width, height, mVideoSize);
 
@@ -347,7 +293,37 @@ public class VideoFragment extends Fragment
             }
             configureTransform(width, height);
             mMediaRecorder = new MediaRecorder();
-            manager.openCamera(cameraId, mStateCallback, null);
+            manager.openCamera(cameraId, new CameraDevice.StateCallback() {
+
+                @Override
+                public void onOpened(@NonNull CameraDevice cameraDevice) {
+                    mCameraDevice = cameraDevice;
+                    startPreview();
+                    mCameraOpenCloseLock.release();
+                    if (mTextureView != null) {
+                        configureTransform(mTextureView.getWidth(), mTextureView.getHeight());
+                    }
+                }
+
+                @Override
+                public void onDisconnected(@NonNull CameraDevice cameraDevice) {
+                    mCameraOpenCloseLock.release();
+                    cameraDevice.close();
+                    mCameraDevice = null;
+                }
+
+                @Override
+                public void onError(@NonNull CameraDevice cameraDevice, int error) {
+                    mCameraOpenCloseLock.release();
+                    cameraDevice.close();
+                    mCameraDevice = null;
+                    Activity activity = getActivity();
+                    if (activity != null) {
+                        activity.finish();
+                    }
+                }
+
+            }, null);
         } catch (CameraAccessException | NullPointerException e) {
             Toast.makeText(activity, "No access to camera.", Toast.LENGTH_SHORT).show();
             activity.finish();
@@ -369,20 +345,22 @@ public class VideoFragment extends Fragment
                 mMediaRecorder = null;
             }
         } catch (InterruptedException e) {
-            throw new RuntimeException("Interrupted while trying to lock camera closing.");
+            throw new RuntimeException("Interrupted");
         } finally {
             mCameraOpenCloseLock.release();
         }
     }
 
     private void startPreview() {
-        if (null == mCameraDevice || !mTextureView.isAvailable() || null == mPreviewSize) {
+        if (mCameraDevice == null || !mTextureView.isAvailable() || mPreviewSize == null) {
             return;
         }
         try {
             closePreviewSession();
             SurfaceTexture texture = mTextureView.getSurfaceTexture();
-            assert texture != null;
+            if (texture == null) {
+                return;
+            }
             texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             mPreviewBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
 
@@ -407,12 +385,12 @@ public class VideoFragment extends Fragment
                         }
                     }, mBackgroundHandler);
         } catch (CameraAccessException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
     }
 
     private void updatePreview() {
-        if (null == mCameraDevice) {
+        if (mCameraDevice == null) {
             return;
         }
         try {
@@ -421,7 +399,7 @@ public class VideoFragment extends Fragment
             thread.start();
             mPreviewSession.setRepeatingRequest(mPreviewBuilder.build(), null, mBackgroundHandler);
         } catch (CameraAccessException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
     }
 
@@ -430,8 +408,8 @@ public class VideoFragment extends Fragment
     }
 
     private void configureTransform(int viewWidth, int viewHeight) {
-        Activity activity = getActivity();
-        if (null == mTextureView || null == mPreviewSize || null == activity) {
+        final Activity activity = getActivity();
+        if (mTextureView == null || mPreviewSize == null || activity == null) {
             return;
         }
         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
@@ -454,25 +432,26 @@ public class VideoFragment extends Fragment
 
     private void setUpMediaRecorder() throws IOException {
         final Activity activity = getActivity();
-        if (null == activity) {
+        if (activity == null) {
             return;
         }
 
-        // Set camera properties: fps
+        // Set camera properties
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mMediaRecorder.setVideoEncodingBitRate(5000000);
-        mMediaRecorder.setVideoFrameRate(30);
+        mMediaRecorder.setVideoEncodingBitRate(5 * 1024 * 1024); // bitrate = 5Mbps
+        mMediaRecorder.setVideoFrameRate(30); // fps = 30
 //        mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
-        mMediaRecorder.setVideoSize(1280, 720);
+        mMediaRecorder.setVideoSize(1280, 720); // resolution = 720p
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
         mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
 
-        if (mNextVideoAbsolutePath == null || mNextVideoAbsolutePath.isEmpty()) {
-            mNextVideoAbsolutePath = getVideoFilePath(getActivity());
+        if (mVideoPath == null || mVideoPath.isEmpty()) {
+            mVideoPath = FileUtils.getStoragePath(getActivity())
+                    + "/" + System.currentTimeMillis() + ".mp4";
         }
-        mMediaRecorder.setOutputFile(mNextVideoAbsolutePath);
+        mMediaRecorder.setOutputFile(mVideoPath);
         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
         switch (mSensorOrientation) {
             case SENSOR_ORIENTATION_DEFAULT_DEGREES:
@@ -485,14 +464,8 @@ public class VideoFragment extends Fragment
         mMediaRecorder.prepare();
     }
 
-    private String getVideoFilePath(Context context) {
-        final File dir = context.getExternalFilesDir(null);
-        return (dir == null ? "" : (dir.getAbsolutePath() + "/"))
-                + System.currentTimeMillis() + ".mp4";
-    }
-
-    private void startRecordingVideo() {
-        if (null == mCameraDevice || !mTextureView.isAvailable() || null == mPreviewSize) {
+    private void startRecording() {
+        if (mCameraDevice == null || !mTextureView.isAvailable() || mPreviewSize == null) {
             return;
         }
         try {
@@ -504,18 +477,14 @@ public class VideoFragment extends Fragment
             mPreviewBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
             List<Surface> surfaces = new ArrayList<>();
 
-            // Set up Surface for the camera preview
             Surface previewSurface = new Surface(texture);
             surfaces.add(previewSurface);
             mPreviewBuilder.addTarget(previewSurface);
 
-            // Set up Surface for the MediaRecorder
             Surface recorderSurface = mMediaRecorder.getSurface();
             surfaces.add(recorderSurface);
             mPreviewBuilder.addTarget(recorderSurface);
 
-            // Start a capture session
-            // Once the session starts, we can update the UI and start recording
             mCameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
 
                 @Override
@@ -525,11 +494,8 @@ public class VideoFragment extends Fragment
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            // UI
                             mButtonVideo.setText(R.string.stop);
                             mIsRecording = true;
-
-                            // Start recording
                             mMediaRecorder.start();
                         }
                     });
@@ -537,14 +503,11 @@ public class VideoFragment extends Fragment
 
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                    Activity activity = getActivity();
-                    if (null != activity) {
-                        Toast.makeText(activity, "Failed", Toast.LENGTH_SHORT).show();
-                    }
+                    Log.e(LOG_TAG, "Create capture session failed");
                 }
             }, mBackgroundHandler);
         } catch (CameraAccessException | IOException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
 
     }
@@ -556,33 +519,27 @@ public class VideoFragment extends Fragment
         }
     }
 
-    private void stopRecordingVideo() {
-        // UI
+    private void stopRecording() {
         mIsRecording = false;
         mButtonVideo.setText(R.string.record);
-        // Stop recording
         mMediaRecorder.stop();
         mMediaRecorder.reset();
-
         Activity activity = getActivity();
-        if (null != activity) {
-            Toast.makeText(activity, "Video saved: " + mNextVideoAbsolutePath,
+        if (activity != null) {
+            Toast.makeText(activity, "Video is save to: " + mVideoPath,
                     Toast.LENGTH_SHORT).show();
-            Log.d(LOG_TAG, "Video saved: " + mNextVideoAbsolutePath);
+            Log.d(LOG_TAG, "Video is save to: " + mVideoPath);
         }
-        mNextVideoAbsolutePath = null;
+        mVideoPath = null;
         startPreview();
     }
 
     static class CompareSizesByArea implements Comparator<Size> {
-
         @Override
         public int compare(Size lhs, Size rhs) {
-            // We cast here to ensure the multiplications won't overflow
             return Long.signum((long) lhs.getWidth() * lhs.getHeight() -
                     (long) rhs.getWidth() * rhs.getHeight());
         }
-
     }
 
     public static class ConfirmationDialog extends DialogFragment {
