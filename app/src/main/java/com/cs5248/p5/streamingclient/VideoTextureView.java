@@ -26,7 +26,7 @@ public class VideoTextureView extends TextureView {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
-        if (0 == mRatioWidth || 0 == mRatioHeight) {
+        if (mRatioWidth == 0 || mRatioHeight == 0) {
             setMeasuredDimension(width, height);
         } else {
             if (width < height * mRatioWidth / mRatioHeight) {
@@ -38,9 +38,6 @@ public class VideoTextureView extends TextureView {
     }
 
     public void setAspectRatio(int width, int height) {
-        if (width < 0 || height < 0) {
-            throw new IllegalArgumentException("Invalid size");
-        }
         mRatioWidth = width;
         mRatioHeight = height;
         requestLayout();

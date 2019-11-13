@@ -16,5 +16,8 @@
     <string name="title_url">Upload URL</string>
     <string name="btn_close">Close</string>
     <string name="permission_msg">Need camera and audio recording permission</string>
+    <string name="title_list">List of Videos</string>
+    <string name="title_empty">No Video</string>
+    <string name="default_upload_url">http://monterosa.d2.comp.nus.edu.sg/~CS5248T5/post-video.php</string>
 
 </resources>

@@ -30,38 +30,35 @@ import com.cs5248.p5.streamingclient.util.FileUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
-    ListView fileList;
-    private TextView videoPopUpTitle;
-    private TextView videoPopupPlay;
-    private TextView videoPopupUpload;
-    private TextView videoPopupDelete;
-    private String outputPath;
-    private PopupWindow videoPopupWindow;
-    private LinearLayout mainLayout;
+    private static final String SEGMENT_FOLDER = "segments";
+
+    private TextView popupTitleTextView;
+    private PopupWindow popupWindow;
+
     private Context mContext;
-    private TextView mainTitleText;
-    private FloatingActionButton fab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mContext = getApplicationContext();
 
-        fab = findViewById(R.id.btn_capture);
+        FloatingActionButton fab = findViewById(R.id.btn_capture);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openCamera();
+                Intent intent = new Intent(mContext, VideoActivity.class);
+                startActivity(intent);
             }
         });
-        mContext = getApplicationContext();
-        ListAllVideos();
+        listVideos();
     }
 
     @Override
@@ -86,140 +83,102 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        ListAllVideos();
+        listVideos();
     }
 
-
-    public void ListAllVideos() {
-        mainTitleText = findViewById(R.id.title_txt_view);
-        fileList = findViewById(R.id.video_list_view);
-        ArrayList<String> filesinfolder = GetFiles(FileUtils.getStoragePath(MainActivity.this));
-        if (filesinfolder.size() > 0) {
-
-            fileList.setAdapter(new ArrayAdapter<>(
-                    MainActivity.this, android.R.layout.simple_list_item_1, filesinfolder));
-            mainTitleText.setText("List of Videos");
-            fileList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+    public void listVideos() {
+        TextView mainTitleText = findViewById(R.id.title_txt_view);
+        ListView videoListView = findViewById(R.id.video_list_view);
+        List<String> videoFileList = FileUtils.getMP4FileNameArrayList(
+                FileUtils.getStoragePath(mContext));
+        if (!videoFileList.isEmpty()) {
+            videoListView.setAdapter(new ArrayAdapter<>(
+                    MainActivity.this, android.R.layout.simple_list_item_1, videoFileList));
+            mainTitleText.setText(R.string.title_list);
+            videoListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position,
                                         long id) {
                     String itemName = parent.getAdapter().getItem(position).toString();
-                    System.out.println(itemName + "is clicked");
-                    showVideoPopup(itemName);
+                    showPopupWindow(itemName);
                 }
             });
         } else {
-            mainTitleText.setText("No video files");
-            fileList.setAdapter(null);
+            mainTitleText.setText(R.string.title_empty);
+            videoListView.setAdapter(null);
         }
     }
 
-    public void openCamera() {
-        Intent intent = new Intent(this, VideoActivity.class);
-        startActivity(intent);
-    }
-
-    public void showVideoPopup(String videoName) {
-
-        mContext = getApplicationContext();
-        mainLayout = findViewById(R.id.content);
-
+    public void showPopupWindow(final String itemName) {
         LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
-        View customView = inflater.inflate(R.layout.popup_window, null);
-        // Initialize a new instance of popup window
-        videoPopupWindow = new PopupWindow(
-                customView,
+        View view = inflater.inflate(R.layout.popup_window, null);
+        popupWindow = new PopupWindow(
+                view,
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
         );
 
-        videoPopupWindow.setElevation(5.0f);
+        float ele = 5;
+        popupWindow.setElevation(ele);
+        LinearLayout mainLayout = findViewById(R.id.content);
+        popupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
+        popupTitleTextView = view.findViewById(R.id.popup_txt_title);
+        popupTitleTextView.setText(itemName);
 
-        ImageButton closeButton = customView.findViewById(R.id.btn_close);
-
-        // Set a click listener for the popup window close button
+        // Close popup
+        ImageButton closeButton = view.findViewById(R.id.btn_close);
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Dismiss the popup window
-                videoPopupWindow.dismiss();
+                popupWindow.dismiss();
             }
         });
 
-        videoPopupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
-        videoPopUpTitle = customView.findViewById(R.id.popup_txt_title);
-        videoPopUpTitle.setText(videoName);
-        //set listeners for play, upload and delete buttons
-        videoPopupUpload = customView.findViewById(R.id.popup_txt_upload_video);
-        videoPopupUpload.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                videoPopupWindow.dismiss();
-                String videoTitle = videoPopUpTitle.getText().toString();
-                //Call the function that splits into segments and uploads
-                String dir = FileUtils.getStoragePath(MainActivity.this);
-                segmentVideo(dir, videoTitle);
-                uploadVideo(dir, videoTitle);
-
-            }
-        });
-
-        videoPopupDelete = customView.findViewById(R.id.popup_txt_delete_video);
-        videoPopupDelete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                videoPopupWindow.dismiss();
-                String videoTitle = videoPopUpTitle.getText().toString();
-                //Call the function that splits into segments and uploads
-                String dir = FileUtils.getStoragePath(MainActivity.this);
-                deleteVideo(dir, videoTitle);
-            }
-        });
-
-        videoPopupPlay = customView.findViewById(R.id.popup_txt_play_video);
+        // Play video
+        TextView videoPopupPlay = view.findViewById(R.id.popup_txt_play_video);
         videoPopupPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                videoPopupWindow.dismiss();
-                String videoTitle = videoPopUpTitle.getText().toString();
-                Toast.makeText(MainActivity.this, "Playing the video : " + videoTitle, Toast.LENGTH_SHORT).show();
-                //Call the function that splits into segments and uploads
-                String dir = FileUtils.getStoragePath(MainActivity.this);
-                playVideo(dir, videoTitle);
+                popupWindow.dismiss();
+                playVideo(itemName);
+            }
+        });
+
+
+        // Upload video
+        TextView videoPopupUpload = view.findViewById(R.id.popup_txt_upload_video);
+        videoPopupUpload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                popupWindow.dismiss();
+                segmentVideo(itemName);
+                uploadVideo(itemName);
+
+            }
+        });
+
+        // Delete video
+        TextView videoPopupDelete = view.findViewById(R.id.popup_txt_delete_video);
+        videoPopupDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                popupWindow.dismiss();
+                deleteVideo(itemName);
             }
         });
 
     }
 
-    public ArrayList<String> GetFiles(String directorypath) {
-        System.out.println("The directory path is " + directorypath);
-        ArrayList<String> Myfiles = new ArrayList<String>();
-        File f = new File(directorypath);
-        File[] files = f.listFiles();
-        if (files.length == 0) {
-            return Myfiles;
-        } else {
-            for (int i = 0; i < files.length; i++) {
-                System.out.println("File name is " + files[i].getName());
-                String name = files[i].getName();
-                if (name.contains(".mp4")) {
-                    Myfiles.add(name);
-                }
-            }
-        }
-        return Myfiles;
-    }
-
-    private void uploadVideo(String baseDir, String videoName) {
-        String segmentsPath = baseDir + "/streamlets/" + videoName + "/";
-        UploadVideoTask uploadObj = new UploadVideoTask(mContext,
+    private void uploadVideo(String videoName) {
+        String videoSegmentFolder = FileUtils.getStoragePath(mContext)
+                + "/" + SEGMENT_FOLDER + "/" + videoName + "/";
+        UploadVideoTask uploadVideoTask = new UploadVideoTask(mContext,
                 videoName.substring(0, videoName.lastIndexOf('.')),
-                segmentsPath);
+                videoSegmentFolder);
         try {
             String uploadUrl = PreferenceManager.getDefaultSharedPreferences(this)
-                    .getString("upload_url",
-                    "http://monterosa.d2.comp.nus.edu.sg/~CS5248T5/post-video.php");
-            uploadObj.execute(uploadUrl);
+                    .getString("upload_url", getString(R.string.default_upload_url));
+            uploadVideoTask.execute(uploadUrl);
         } catch (Exception e) {
             Log.e(LOG_TAG, e.getMessage());
             Toast.makeText(mContext, "Upload " + videoName + "failed. Please try again.",
@@ -228,60 +187,60 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void deleteVideo(String directorypath, String fileName) {
-        String filepath = directorypath + "/" + fileName;
-        File f = new File(filepath);
-        f.delete();
-        File dir = new File(directorypath + "/streamlets/" + fileName);
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                new File(dir, children[i]).delete();
+    private void deleteVideo(String videoName) {
+        new File(FileUtils.getStoragePath(mContext) + "/" + videoName).delete();
+        File videoSegmentFolder = new File(FileUtils.getStoragePath(mContext)
+                + "/" + SEGMENT_FOLDER + "/" + videoName);
+
+        try {
+            if (videoSegmentFolder.isDirectory()) {
+                org.apache.commons.io.FileUtils.deleteDirectory(videoSegmentFolder);
             }
+            Toast.makeText(mContext,
+                    "Deleted video " + videoName + " and its segments.",
+                    Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            Log.e(LOG_TAG, e.getMessage());
+            Toast.makeText(mContext,
+                    "Delete video " + videoName + " and its segments failed.",
+                    Toast.LENGTH_SHORT).show();
+        } finally {
+            listVideos();
         }
-        dir.delete();
-        Toast.makeText(mContext,
-                "Deleted video " + fileName + " and its segements.",
-                Toast.LENGTH_SHORT).show();
-        ListAllVideos();
     }
 
-    private void playVideo(String directorypath, String fileName) {
-        String filepath = directorypath + "/" + fileName;
-        File f = new File(filepath);
-        Context mContext = getApplicationContext();
+    private void playVideo(String videoName) {
+        File video = new File(FileUtils.getStoragePath(mContext) + "/" + videoName);
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        //intent.setDataAndType(Uri.fromFile(f), "video/*");
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         Uri apkURI = FileProvider.getUriForFile(
                 mContext,
                 mContext.getApplicationContext()
-                        .getPackageName() + ".provider", f);
+                        .getPackageName() + ".provider", video);
         intent.setDataAndType(apkURI, "video/*");
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         mContext.startActivity(intent);
-
     }
 
-    private void segmentVideo(String baseDir, String videoName) {
-        //Segment the video in splits of 3 seconds
-        Log.d(LOG_TAG, "Inside segmentVideo()");
-        //ArrayList<String> filesinfolder = getFiles(directorypath);
-        String filepath = baseDir + "/" + videoName;
-        File f = new File(filepath);
-        outputPath = getSegmentFolder(f.getName());
-        Log.d(LOG_TAG, "Path where segments have to be saved is " + outputPath);
+    private void segmentVideo(String videoName) {
+        String outputPath = getSegmentFolder(videoName);
+        String videoPath = FileUtils.getStoragePath(mContext) + "/" + videoName;
+        Log.d(LOG_TAG, "Segment path: " + outputPath);
 
-        SegmentVideoTask obj = new SegmentVideoTask(mContext);
+        SegmentVideoTask segmentVideoTask = new SegmentVideoTask(mContext);
         try {
-            obj.execute(filepath, outputPath, videoName.substring(0, videoName.lastIndexOf('.')));
+            segmentVideoTask.execute(videoPath, outputPath,
+                    videoName.substring(0, videoName.lastIndexOf('.')));
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
+            Toast.makeText(mContext,
+                    "Segment video " + videoName + " failed.",
+                    Toast.LENGTH_SHORT).show();
         }
     }
 
     private String getSegmentFolder(String innerFolderName) {
-        String folderName = "streamlets/" + innerFolderName;
+        String folderName = SEGMENT_FOLDER + "/" + innerFolderName;
         File segmentFolder = new File(FileUtils.getStoragePath(MainActivity.this), folderName);
         segmentFolder.mkdirs();
 

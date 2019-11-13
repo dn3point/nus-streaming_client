@@ -35,4 +35,16 @@ public class FileUtils {
             return results;
         }
     }
+
+    public static List<String> getMP4FileNameArrayList(String dirPath) {
+        List<String> fileNames = new ArrayList<>();
+        List<File> files = getFilesInDir(dirPath);
+        for (File file : files) {
+            String name = file.getName();
+            if (name.endsWith(".mp4")) {
+                fileNames.add(name);
+            }
+        }
+        return fileNames;
+    }
 }
