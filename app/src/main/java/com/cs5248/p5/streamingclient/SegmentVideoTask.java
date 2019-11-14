@@ -144,7 +144,8 @@ public class SegmentVideoTask extends AsyncTask<String, Integer, Void> {
             video.addTrack(new CroppedTrack(track, startSample, endSample));
         }
         Container out = new DefaultMp4Builder().build(video);
-        String outputFile = outputPath + videoId + "_" + segmentNumber + ".mp4";
+        String segementNumberString = segmentNumber < 10 ? ("0" + segmentNumber) : segmentNumber + "";
+        String outputFile = outputPath + videoId + "_" + segementNumberString + ".mp4";
         try (FileOutputStream fos = new FileOutputStream(outputFile);
              FileChannel fc = fos.getChannel()) {
             out.writeContainer(fc);
