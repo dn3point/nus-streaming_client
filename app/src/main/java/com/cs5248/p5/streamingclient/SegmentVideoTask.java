@@ -24,9 +24,6 @@ public class SegmentVideoTask extends AsyncTask<String, Integer, Void> {
     private static final String LOG_TAG = SegmentVideoTask.class.getSimpleName();
 
     private static final double DURATION = 3.0;
-
-//    private double videoTime;
-//    private boolean set;
     private Context mContext;
 
 
@@ -89,8 +86,6 @@ public class SegmentVideoTask extends AsyncTask<String, Integer, Void> {
         double start = 0.0;
         double end = DURATION;
         int segNum = 1;
-//        videoTime = 0.0;
-//        set = false;
         try {
             while (segmentVideo(start, end, segNum, videoPath, outputPath, videoID)) {
                 segNum++;
@@ -117,11 +112,6 @@ public class SegmentVideoTask extends AsyncTask<String, Integer, Void> {
                 startTime = correctTimeToSyncSample(track, startTime, true);
                 endTime = correctTimeToSyncSample(track, endTime, true);
                 timeCorrected = true;
-//                if (!set) {
-//                    videoTime = correctTimeToSyncSample(track, 50000, true);
-//                    set = true;
-//                    System.out.println("Video total time =" + videoTime);
-//                }
             }
         }
 
