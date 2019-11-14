@@ -194,12 +194,17 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             if (videoSegmentFolder.isDirectory()) {
-                org.apache.commons.io.FileUtils.deleteDirectory(videoSegmentFolder);
+                String[] videos = videoSegmentFolder.list();
+                for (String video : videos) {
+                    File currVideo = new File(videoSegmentFolder.getPath(), video);
+                    currVideo.delete();
+                }
+                videoSegmentFolder.delete();
             }
             Toast.makeText(mContext,
                     "Deleted video " + videoName + " and its segments.",
                     Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.e(LOG_TAG, e.getMessage());
             Toast.makeText(mContext,
                     "Delete video " + videoName + " and its segments failed.",
@@ -241,7 +246,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String getSegmentFolder(String innerFolderName) {
         String folderName = SEGMENT_FOLDER + "/" + innerFolderName;
-        File segmentFolder = new File(FileUtils.getStoragePath(MainActivity.this), folderName);
+        File segmentFolder = new File(FileUtils.getStoragePath(mContext), folderName);
         segmentFolder.mkdirs();
 
         return segmentFolder.getPath() + "/";
