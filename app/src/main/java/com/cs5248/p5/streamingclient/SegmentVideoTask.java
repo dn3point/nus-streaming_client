@@ -85,7 +85,7 @@ public class SegmentVideoTask extends AsyncTask<String, Integer, Void> {
     private void segment(String videoPath, String outputPath, String videoID) {
         double start = 0.0;
         double end = DURATION;
-        int segNum = 1;
+        int segNum = 0;
         try {
             while (segmentVideo(start, end, segNum, videoPath, outputPath, videoID)) {
                 segNum++;
@@ -144,8 +144,13 @@ public class SegmentVideoTask extends AsyncTask<String, Integer, Void> {
             video.addTrack(new CroppedTrack(track, startSample, endSample));
         }
         Container out = new DefaultMp4Builder().build(video);
-        String segementNumberString = segmentNumber < 10 ? ("0" + segmentNumber) : segmentNumber + "";
-        String outputFile = outputPath + videoId + "_" + segementNumberString + ".mp4";
+        String segmentNumberString = segmentNumber + "";
+        if (segmentNumber < 10) {
+            segmentNumberString = "00" + segmentNumber;
+        } else if (segmentNumber < 100) {
+            segmentNumberString = "0" + segmentNumber;
+        }
+        String outputFile = outputPath + videoId + "_" + segmentNumberString + ".mp4";
         try (FileOutputStream fos = new FileOutputStream(outputFile);
              FileChannel fc = fos.getChannel()) {
             out.writeContainer(fc);
@@ -159,7 +164,7 @@ public class SegmentVideoTask extends AsyncTask<String, Integer, Void> {
         switch (type) {
             case 0:
                 int seqNum = values[1];
-                Toast.makeText(mContext, "Creating segment No." + seqNum, Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, "Creating segment No." + (seqNum + 1), Toast.LENGTH_SHORT).show();
         }
     }
 
