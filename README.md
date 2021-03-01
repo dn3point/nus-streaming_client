@@ -1,4 +1,5 @@
 # StreamingClient
+## CS5248 Project
 
 MainActivity.java
   - Main activity of the app. Contain the list of video view and video pop-up window.
